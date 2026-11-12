@@ -1,10 +1,9 @@
-import html
 import json
+import re
 from pathlib import Path
 
 import joblib
 import requests
-import spacy
 import streamlit as st
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -49,12 +48,6 @@ def load_trained_baseline():
     return joblib.load(BASELINE_PATH)
 
 
-@st.cache_resource
-def load_english_tokenizer():
-    """Create a tokenizer only; this does not load a pretrained NER model."""
-    return spacy.blank("en")
-
-
 def token_features(tokens, index):
     """Build the same word and context features used during training."""
     word = tokens[index]
@@ -93,8 +86,11 @@ def extract_entities_with_trained_model(text):
     model = saved["model"]
     vectorizer = saved["vectorizer"]
 
-    doc = load_english_tokenizer()(text)
-    tokens = [token.text for token in doc]
+    # Keep token positions so extracted phrases preserve their original text.
+    matches = list(
+        re.finditer(r"\w+(?:[-’']\w+)*|[^\w\s]", text, flags=re.UNICODE)
+    )
+    tokens = [match.group() for match in matches]
 
     if not tokens:
         return []
@@ -105,7 +101,7 @@ def extract_entities_with_trained_model(text):
     ]
     X = vectorizer.transform(features)
 
-    # Work around this environment's 64-bit sparse-index compatibility issue.
+    # Compatibility workaround for this environment's sparse-matrix indices.
     X.indices = X.indices.astype("int32")
     X.indptr = X.indptr.astype("int32")
 
@@ -126,12 +122,14 @@ def extract_entities_with_trained_model(text):
         nonlocal active_start, active_label
 
         if active_start is not None and last_token_index >= active_start:
-            start_char = doc[active_start].idx
-            end_char = doc[last_token_index].idx + len(doc[last_token_index])
+            start_char = matches[active_start].start()
+            end_char = matches[last_token_index].end()
             phrase = text[start_char:end_char]
-            final_label = label_map[active_label]
 
-            entities.append({"text": phrase, "label": final_label})
+            entities.append({
+                "text": phrase,
+                "label": label_map[active_label],
+            })
 
         active_start = None
         active_label = None
@@ -253,16 +251,19 @@ st.write(
 
 with st.sidebar:
     st.header("Settings")
+
     top_k = st.slider(
         "Similar examples to retrieve",
         min_value=1,
         max_value=5,
         value=3,
     )
+
     method = st.radio(
         "Extraction method",
         ["Dataset-trained baseline", "RAG + local Llama"],
     )
+
     st.markdown("**Labels:** PERSON · ORG · LOC · DATE · MISC")
     st.caption(
         "The CoNLL-2003 training labels cover PER, ORG, LOC, and MISC. "
@@ -273,6 +274,7 @@ sample_text = (
     "Microsoft CEO Satya Nadella announced a research center "
     "in London in 2025."
 )
+
 input_text = st.text_area(
     "Enter text to analyze",
     value=sample_text,
@@ -290,6 +292,7 @@ if st.button("Extract entities", type="primary"):
             examples, retrieval_vectorizer, example_vectors = (
                 load_retrieval_index()
             )
+
             retrieved = retrieve_examples(
                 text,
                 examples,
@@ -299,22 +302,35 @@ if st.button("Extract entities", type="primary"):
             )
 
             if method == "Dataset-trained baseline":
-                with st.spinner("Predicting with the CoNLL-2003-trained model..."):
+                with st.spinner(
+                    "Predicting with the CoNLL-2003-trained model..."
+                ):
                     entities = extract_entities_with_trained_model(text)
-                extraction_mode = "Supervised LinearSVC trained on CoNLL-2003"
+
+                extraction_mode = (
+                    "Supervised LinearSVC trained on CoNLL-2003"
+                )
 
             else:
                 try:
-                    with st.spinner("Analyzing with local Llama via Ollama..."):
-                        entities = extract_entities_with_ollama(text, retrieved)
+                    with st.spinner(
+                        "Analyzing with local Llama via Ollama..."
+                    ):
+                        entities = extract_entities_with_ollama(
+                            text,
+                            retrieved,
+                        )
+
                     extraction_mode = (
                         "RAG few-shot prompting with local Llama 3.2 3B"
                     )
+
                 except requests.RequestException:
                     with st.spinner(
                         "Ollama is unavailable; using the trained baseline..."
                     ):
                         entities = extract_entities_with_trained_model(text)
+
                     extraction_mode = (
                         "CoNLL-2003-trained LinearSVC fallback "
                         "(Ollama unavailable)"
@@ -324,7 +340,11 @@ if st.button("Extract entities", type="primary"):
             st.subheader("Detected entities")
 
             if entities:
-                st.dataframe(entities, hide_index=True, use_container_width=True)
+                st.dataframe(
+                    entities,
+                    hide_index=True,
+                    use_container_width=True,
+                )
             else:
                 st.info("No entities were detected.")
 
@@ -344,6 +364,7 @@ if st.button("Extract entities", type="primary"):
 
         except Exception as error:
             st.error(f"Something went wrong: {error}")
+
 
 st.divider()
 st.caption(

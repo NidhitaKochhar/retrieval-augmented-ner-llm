@@ -1,0 +1,100 @@
+{
+  "model": "llama3.2:3b",
+  "pilot_size": 500,
+  "seed": 42,
+  "top_k": 3,
+  "retrieval_source": "CoNLL-2003 train split only",
+  "zero_shot": {
+    "micro_exact_span": {
+      "precision": 0.4414,
+      "recall": 0.5418,
+      "f1": 0.4865,
+      "tp": 441,
+      "fp": 558,
+      "fn": 373
+    },
+    "per_label": {
+      "LOC": {
+        "precision": 0.5417,
+        "recall": 0.7101,
+        "f1": 0.6145,
+        "tp": 169,
+        "fp": 143,
+        "fn": 69
+      },
+      "MISC": {
+        "precision": 0.0268,
+        "recall": 0.0638,
+        "f1": 0.0377,
+        "tp": 6,
+        "fp": 218,
+        "fn": 88
+      },
+      "ORG": {
+        "precision": 0.425,
+        "recall": 0.5528,
+        "f1": 0.4806,
+        "tp": 136,
+        "fp": 184,
+        "fn": 110
+      },
+      "PERSON": {
+        "precision": 0.922,
+        "recall": 0.5508,
+        "f1": 0.6897,
+        "tp": 130,
+        "fp": 11,
+        "fn": 106
+      }
+    }
+  },
+  "rag": {
+    "micro_exact_span": {
+      "precision": 0.47,
+      "recall": 0.559,
+      "f1": 0.5107,
+      "tp": 455,
+      "fp": 513,
+      "fn": 359
+    },
+    "per_label": {
+      "LOC": {
+        "precision": 0.64,
+        "recall": 0.6723,
+        "f1": 0.6557,
+        "tp": 160,
+        "fp": 90,
+        "fn": 78
+      },
+      "MISC": {
+        "precision": 0.0603,
+        "recall": 0.1277,
+        "f1": 0.0819,
+        "tp": 12,
+        "fp": 187,
+        "fn": 82
+      },
+      "ORG": {
+        "precision": 0.4204,
+        "recall": 0.6545,
+        "f1": 0.5119,
+        "tp": 161,
+        "fp": 222,
+        "fn": 85
+      },
+      "PERSON": {
+        "precision": 0.9173,
+        "recall": 0.5169,
+        "f1": 0.6612,
+        "tp": 122,
+        "fp": 11,
+        "fn": 114
+      }
+    }
+  },
+  "zero_shot_failures": 1,
+  "rag_failures": 1,
+  "mean_zero_shot_seconds": 5.681,
+  "mean_rag_seconds": 8.29,
+  "note": "Pilot run only. Failed inference requests are recorded as empty predictions and counted in the failure totals. Do not present these pilot results as final paper results."
+}

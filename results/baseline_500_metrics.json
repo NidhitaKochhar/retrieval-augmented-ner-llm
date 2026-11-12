@@ -1,0 +1,48 @@
+{
+  "micro_exact_span": {
+    "precision": 0.6733,
+    "recall": 0.7518,
+    "f1": 0.7104,
+    "tp": 612,
+    "fp": 297,
+    "fn": 202
+  },
+  "per_label": {
+    "PERSON": {
+      "precision": 0.6958,
+      "recall": 0.7754,
+      "f1": 0.7335,
+      "tp": 183,
+      "fp": 80,
+      "fn": 53
+    },
+    "ORG": {
+      "precision": 0.5649,
+      "recall": 0.6545,
+      "f1": 0.6064,
+      "tp": 161,
+      "fp": 124,
+      "fn": 85
+    },
+    "LOC": {
+      "precision": 0.7829,
+      "recall": 0.8487,
+      "f1": 0.8145,
+      "tp": 202,
+      "fp": 56,
+      "fn": 36
+    },
+    "MISC": {
+      "precision": 0.6408,
+      "recall": 0.7021,
+      "f1": 0.6701,
+      "tp": 66,
+      "fp": 37,
+      "fn": 28
+    }
+  },
+  "model": "LinearSVC trained on CoNLL-2003 train split",
+  "sentence_count": 500,
+  "evaluation_ids_source": "results/llm_pilot_predictions.csv",
+  "metric": "Exact entity-span match"
+}
